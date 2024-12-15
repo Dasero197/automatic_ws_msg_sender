@@ -1,7 +1,7 @@
 {
     "excluded_name":[], 
-    "excluded_number":["+22962019988","62019988"],
-    "excludes_word_in_name": ["dayane", "metaverse", "mv"],
+    "excluded_number":[],
+    "excludes_word_in_name": [],
     "redis_host":"localhost",
-    "redis_port":
+    "redis_port":6379
 }

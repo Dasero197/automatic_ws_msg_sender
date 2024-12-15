@@ -305,6 +305,6 @@ class Main:
 
 if __name__ == "__main__":
     main = Main()
-    async_loop_thread = Thread(target=main._start_async_loop, daemon=True)
-    async_loop_thread.start()
+    #async_loop_thread = Thread(target=main._start_async_loop, daemon=True)
+    #async_loop_thread.start()
     main.main()
