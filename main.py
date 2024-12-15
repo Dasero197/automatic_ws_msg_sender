@@ -7,6 +7,7 @@ from threading import Thread
 from src.core_modules.ws_comm import WS_comm as WS
 from src.core_modules.gui import Gui #designer pour etre initialisé à chaque utilisation et abandonner pour le garbage collector plus tard
 
+
 class Main:
     def __init__(self):
         self.context = worker_context
