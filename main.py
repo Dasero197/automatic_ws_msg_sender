@@ -4,6 +4,7 @@ from logging.handlers import TimedRotatingFileHandler
 from typing import Optional
 from src.core_modules.worker_network.worker_context import worker_context
 from threading import Thread
+from src.core_modules.ws_comm import WS_comm as WS
 from src.core_modules.gui import Gui #designer pour etre initialisé à chaque utilisation et abandonner pour le garbage collector plus tard
 
 class Main:
@@ -12,6 +13,9 @@ class Main:
         self.logger = self.__setup_logger()
         self.config_path = "config.json"
         self.loop: asyncio.AbstractEventLoop = None
+        self.fail_send:list[dict] = []
+        self.free_workers = []
+        self.total_sent = 0
 
     def __setup_logger(self):
         logger = logging.getLogger(self.__class__.__name__)
@@ -58,18 +62,6 @@ class Main:
             self.logger.error("No running async event loop -- call _start_async_loop()")
             print("No running async event loop -- call _start_async_loop()")
             return None
-        
-
-    def main(self):
-        app_type = self._get_app_type()
-        if app_type == 1:
-            asyncio.run(self.orch_main()) 
-        elif app_type == 2:
-            self.wrkr_main()
-        else:
-            print(f"App_type : {app_type} not implemented yet")
-            os._exit(0)
-
 
     def _load_vcf(self, file_path: str):
    
@@ -124,14 +116,14 @@ class Main:
                 print("\nSélection invalide, votre choix doit etre 1 ou 2\n")
 
     def _get_contact_and_msg(self):
-        print("\nle placeholder pour le nom du contact est: '{{nom}}'\nle placeholder pour le prénom du contact est: '{{prenom}}'\n")
+        print("\nle placeholder pour le nom et prenom du contact est: '{{contact}}'\n")
         msg = None
         path = None
         path_resp = False
         while not msg or not path_resp:
             try:
                 if not msg:
-                    msg = str(Gui(self.logger).prompt_user("Renseigner le message à envoyer"))
+                    msg = input("\nRenseigner le message à envoyer\n")
                 if not path:
                     path_resp,path = Gui(self.logger).select_and_copy_file(file_categorie="Fichier de contacts",
                                                         destination_path=".temp/contact_file",
@@ -190,6 +182,85 @@ class Main:
             self.logger.exception(f"filter_contact exception: {str(e)}")
             os._exit(0)
 
+    def _contact_generator(self, contacts:list[dict]):
+        for contact in contacts:
+            yield contact
+    
+    async def _send_msg_by_wrkr(self, contact:dict, message:str, target:str):
+        try:
+            self.logger.info(f"tentative d'envois de requete au worker {target}")
+            rqst_inst = self.context.get_request_inst
+            if not rqst_inst:
+                return self.logger.error(f"Unable to get request instance for worker {target}")
+            request ={"contact":contact, "message":message}
+            return await rqst_inst.send_rqst(request=request,target_worker_id= target, logger= self.logger)
+        except Exception as e:
+            self.logger.exception(f"_send_msg_by_wrkr error: {str(e)}")
+            raise e
+
+    def _send_msg(self, contact:dict, message:str, sender_id:str):
+        try:
+            message = message.replace("{{contact}}", contact.get("name") if contact.get("name",'')!= '' else "Monsieur/Madame" )
+            ws = WS(sender_id= sender_id, logger= self.logger)
+            for num in contact.get("phone",[]):
+                ws.send_ws_message(message= message,number= num)
+            self.total_sent =+ 1
+        except Exception as e:
+            self.logger.exception(f"_send_msg error: {str(e)}")
+            self.fail_send.append(contact)
+            raise e
+        
+    async def _broadcast_message(self, contact:list[dict], message:str, use_local_worker:Optional[bool]= False):
+        print("Démarrage du processus d'envois...")
+        my_id = self.context.get_worker_id
+        contact_nb = len(contact)
+        contact_gen = self._contact_generator(contact)
+        while True:
+            try:
+                active_workers = await self.context.get_active_workers
+                if active_workers and len(active_workers)>1:
+                    print(f"\n {len(active_workers)-1} workers externes actifs")
+                    for worker in active_workers:
+                        if str(worker) != my_id:
+                            asyncio.create_task(self._send_msg_by_wrkr(contact= next(contact_gen),message=message, target= worker,sender= my_id))
+                else:
+                    print("\n Aucun worker externe actif!\n")
+
+                if (not use_local_worker and len(active_workers) <= 1) or use_local_worker:
+                    if not use_local_worker:
+                        print("\nAucun worker externe actif -- utilisation du worker interne nécéssaire!\n")
+                    self._send_msg(contact= next(contact_gen),message=message)
+
+                print(f"\n{self.total_sent} messages envoyés sur {contact_nb}...")
+            except StopIteration:
+                self.logger.info("fin des iterations sur la liste de contact")
+                break
+        
+
+            
+                
+
+
+
+
+            
+
+
+
+
+
+
+    def main(self):
+        app_type = self._get_app_type()
+        if app_type == 1:
+            asyncio.run(self.orch_main()) 
+        elif app_type == 2:
+            self.wrkr_main()
+        else:
+            print(f"App_type : {app_type} not implemented yet")
+            os._exit(0)
+
+
     async def orch_main(self):
         msg, path = self._get_contact_and_msg()
 
@@ -213,9 +284,18 @@ class Main:
         print(f"\n{len(contacts)} contacts brutes chargé\n")
         
         filtered_contact = self._filter_contacts(contacts)
-        print(f"\n{len(filtered_contact)} contact restant après application des filtres\n")
+        while True:
+            resp = input(f"\n{len(filtered_contact)} contact restant après application des filtres\nVoulez-vous les consulter? (O/N)")
+            if not resp.lower() in ["o", "n"]:
+                print("Choix invalide!")
+            elif resp.lower() == "o":
+                for contact in filtered_contact:
+                    print(contact)
+                break
+            elif resp.lower() == "n":
+                break
 
-
+        
 
 
     async def wrkr_main(self):
