@@ -10,9 +10,12 @@ class _Worker_response:
     """
     def __init__(self, logger:logging.Logger, init_id:str):
         self.__worker_id :str = None
-        self.__redis = c().worker_redis_db
+        config = c()
+        config.init_redis_client()
+        self.__redis = config.worker_redis_db
+
         self.__pub_sub = self.__redis.pubsub()
-        self.__resp_chanel = c().responses_chanel
+        self.__resp_chanel = c().responses_chanel 
         self.__logger = logger
         logger.info(f"Worker_response initialized init_id: {init_id}")
 

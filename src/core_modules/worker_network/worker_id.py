@@ -10,10 +10,15 @@ class _Worker_id:
     def __init__(self,logger: logging.Logger, init_id:str):
         self.worker_id = str(uuid4())
         logger.info(f"Worker_id initialized init_id: {init_id}")
+        config = c()
+        config.init_redis_client()
+        self.__redis = config.worker_redis_db
 
     async def __heartbeat_loop(self):
+
+        
         while True:
-            await c().worker_redis_db.set(f"worker:{self.worker_id}", "active", ex=c().heartbeat_interval * 2) # *2 pour majorer en cas de simple retard d'un worker pour ne pas supprimer ces connexions pour rien
+            await self.__redis.set(f"worker:{self.worker_id}", "active", ex=c().heartbeat_interval * 2) # *2 pour majorer en cas de simple retard d'un worker pour ne pas supprimer ces connexions pour rien
             await asyncio.sleep(c().heartbeat_interval)
 
     def start(self):

@@ -17,7 +17,14 @@ class Config:
         else:
             print("\nError from config class: unable to detect config.json file -- default localhost redis server used -- run setup\n")
         
-        self.worker_redis_db = redis.Redis(host=self.__host, port=self.__port, decode_responses=True)
+        self.worker_redis_db = None
         self.requests_chanel = "wrk-rqst-chan"
         self.responses_chanel = "wrk-resp-chan"
         self.heartbeat_interval = 10
+
+
+    def init_redis_client(self) :
+        """Initialise le client Redis, s'il n'est pas déjà initialisé."""
+        if self.worker_redis_db is None:
+            self.worker_redis_db = redis.Redis(host=self.__host, port=self.__port, decode_responses=True)
+        

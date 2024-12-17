@@ -3,3 +3,4 @@
 __pycache__/
 logs/
 *.vcf
+PyWhatKit_DB.txt

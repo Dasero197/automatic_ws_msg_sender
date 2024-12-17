@@ -13,7 +13,8 @@ class Gui:
         t.set_appearance_mode("dark")
         t.set_default_color_theme("dark-blue")
         self.root = t.CTk() # meme si on ne compte pas utiliser le fenetre principale il est necessaire de la creer sinon on a un bug
-        
+        self.root.withdraw()
+
     def prompt_user(self, prompt:str):
         dialog = t.CTkInputDialog(text=prompt, title= "Config")
         dialog.geometry("250x250")
@@ -27,7 +28,7 @@ class Gui:
                             destination_path: str, 
                             new_name: Optional[str]= None, 
                             file_type: Optional[list] = [("Fichiers image", "*.png;*.jpg;*.jpeg;*.bmp;*.gif"), ("Tous les fichiers", "*.*")] ):
-                
+        
         file_path = filedialog.askopenfilename(
             title=f"Select {file_categorie}",
             filetypes=file_type)

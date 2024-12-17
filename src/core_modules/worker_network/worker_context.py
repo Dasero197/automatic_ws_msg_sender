@@ -18,12 +18,15 @@ class __Worker_context:
         self.__response_instance : _Worker_response = None
         self.__worker_id :str = None
         self.__started = False
-        self.__redis_client = c().worker_redis_db
+        self.__redis_client = None
+        self.config = c()
 
         self.__logger = self.__setup_logger()
         self.__logger.info("Logger configuré pour Handler.")
 
     async def is_redis_online(self, logger: logging.Logger):
+        if not self.__redis_client:
+            print("Redis non initialisé veuiller appeler la methode 'init_redis_client' ")
         try:
             if await self.__redis_client.ping():
                 return True
@@ -57,6 +60,12 @@ class __Worker_context:
             logger.propagate = False
 
         return logger
+
+    def init_redis_client(self):
+        """doit etre appelé avant toute operation basé sur le worker context et associés
+        permet d'initialiser le client redis dans le bon environnement et context."""
+        self.config.init_redis_client()
+        self.__redis_client = self.config.worker_redis_db
 
     async def start(self, fastapi_log: Optional[logging.Logger]):
         """

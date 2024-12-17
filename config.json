@@ -3,5 +3,7 @@
     "excluded_number":[],
     "excludes_word_in_name": [],
     "redis_host":"localhost",
-    "redis_port":6379
+    "redis_port":6379,
+    "message_sending_timeout": 24,
+    "window_closing_timeout": 3
 }

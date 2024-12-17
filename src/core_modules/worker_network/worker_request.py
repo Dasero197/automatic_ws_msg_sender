@@ -1,7 +1,7 @@
 import json
 import logging, asyncio
+import os
 from typing import Optional
-from uuid import uuid4
 from src.config import Config as c
 from src.core_modules.ws_comm import WS_comm as WS
 
@@ -11,7 +11,9 @@ class _Worker_request:
     """
     def __init__(self, logger:logging.Logger, init_id:str):
         self.__worker_id: str = None
-        self.__redis = c().worker_redis_db
+        config = c()
+        config.init_redis_client()
+        self.__redis = config.worker_redis_db
         self.__pub_sub = self.__redis.pubsub()
         self.__rqst_channel = c().requests_chanel
         self.__logger = logger
@@ -40,11 +42,17 @@ class _Worker_request:
         if target_id == self.__worker_id:
             sender_id = message_dict.pop("sender_id")
             self.__logger.info(f"Request receive from worker: {sender_id} on worker : {self.__worker_id}")
-            comm_man = WS(sender_id=sender_id,  
-                        logger= self.__logger)  #initialiser la class qui doir gerer la requete
-            
-            asyncio.create_task(comm_man.handle_rqst(message= message_dict)) #créer la tache de gestion de la requete
-            
+            if message_dict["operation"] == "shutdown":
+                print("Signal d'arret de l'orchestrateur reçu -- arrêt du worker")
+                self.__logger.info("Signal d'arret de l'orchestrateur reçu -- arrêt du worker")
+                os._exit(0)
+
+            else:
+                comm_man = WS(sender_id=sender_id,  
+                            logger= self.__logger)  #initialiser la class qui doir gerer la requete
+                
+                comm_man.handle_rqst(msg= message_dict) #créer la tache de gestion de la requete
+                
 
     async def send_rqst(self, request: dict, target_worker_id: str, logger: Optional[logging.Logger] = None, flux_id: Optional[str]=None):
         self.__logger.info(f"Trying to sent request to worker {target_worker_id} on worker : {self.__worker_id} | flux_id: {flux_id}")
