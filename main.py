@@ -12,7 +12,7 @@ class Main:
     def __init__(self):
         self.context = worker_context
         self.logger = self.__setup_logger()
-        self.config_path = "config.json"
+        self.config_path = "_internal/config.json"
         self.loop: asyncio.AbstractEventLoop = None
 
     def __setup_logger(self):

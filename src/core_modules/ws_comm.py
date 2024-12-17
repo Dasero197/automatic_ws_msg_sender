@@ -1,11 +1,8 @@
-import asyncio
 import json, time
 from logging import Logger
-"""import pywhatkit
-import pywhatkit.whats"""
+import pywhatkit
+import pywhatkit.whats
 from src.core_modules.state import state
-
-
 
 class WS_comm:
     def __init__(self, sender_id:str, logger: Logger):
@@ -14,7 +11,7 @@ class WS_comm:
         self.logger = logger
         self.config = None
         self.my_id = worker_context.get_worker_id
-        with open("config.json", 'r', encoding='utf-8') as config_file:
+        with open("_internal/config.json", 'r', encoding='utf-8') as config_file:
                 self.config = json.load(config_file)
 
     def handle_rqst(self, msg: dict):
@@ -82,9 +79,8 @@ class WS_comm:
 
 
     def send_ws_message(self, message:str, number:str):
-        """pywhatkit.whats.sendwhatmsg_instantly(phone_no= number, 
+        pywhatkit.whats.sendwhatmsg_instantly(phone_no= number, 
                                               message=message, 
                                               tab_close= True,
                                               close_time= self.config.get("window_closing_timeout",3), 
-                                              wait_time=self.config.get("message_sending_timeout",15) )"""
-        time.sleep(30)
+                                              wait_time=self.config.get("message_sending_timeout",15) )
