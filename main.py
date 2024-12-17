@@ -134,7 +134,7 @@ class Main:
         while not msg or not path_resp:
             try:
                 if not msg:
-                    msg = input("\nRenseigner le message à envoyer\n")
+                    msg = Gui(self.logger).prompt_user("\nRenseigner le message à envoyer\n")
                 if not path:
                     print("\nSéléctionner le fichier .vcf dans la boite de dialogue\n")
                     path_resp,path = Gui(self.logger).select_and_copy_file(file_categorie="Fichier de contacts",
