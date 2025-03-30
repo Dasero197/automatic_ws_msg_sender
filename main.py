@@ -277,7 +277,7 @@ class Main:
                             remaining_t = "Inconnu"
                         else:
                             moy_process = (sum(state.process_times) / len(state.process_times))/60
-                            remaining_t = f"{moy_process*abs(contact_nb-state.total_sent)} minutes..."
+                            remaining_t = f"{(moy_process*abs(contact_nb-state.total_sent)/len(active_workers))} minutes..."
                         print(f"\n{state.total_sent} messages envoyés sur {contact_nb}...\nExtimation du temps restant: {remaining_t}")
                         self.logger.info(f"\n{state.total_sent} messages envoyés sur {contact_nb}...")
                         last_prompt = time.time()
