@@ -175,12 +175,10 @@ class Main:
                 
                 valid_numbers = []
                 for number in numbers:
-                    # Extraire les 8 derniers chiffres du numéro
-                    last_8_digits = number[-8:].replace('-', '').replace(' ', '')
 
                     # Vérifier si le numéro est dans la liste des exclus
-                    if last_8_digits not in excluded_numbers and f"+229{last_8_digits}" not in excluded_numbers:
-                        valid_numbers.append(f"+229{last_8_digits}")
+                    if number not in excluded_numbers:
+                        valid_numbers.append(number)
                 
                 if valid_numbers:
                     filtered_contact = {
